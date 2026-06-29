@@ -3,8 +3,14 @@ import pandas as pd
 import pickle
 import os
 import argparse
+import sys
 from collections import Counter, defaultdict
+from pathlib import Path
 from sklearn.preprocessing import StandardScaler
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 
 def split_edge_line(line):

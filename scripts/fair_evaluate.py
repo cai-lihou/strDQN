@@ -3,12 +3,18 @@ import ast
 import glob
 import os
 import pickle
+import sys
 from datetime import datetime
+from pathlib import Path
 
 import pandas as pd
 
-from strict_tw_ic import t2EICModel
-from result_io import default_result_dir, delta_metadata, keep_latest_run, write_excel_locked
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from src.diffusion.strict_tw_ic import t2EICModel
+from src.common.result_io import default_result_dir, delta_metadata, keep_latest_run, write_excel_locked
 
 
 ABLATION_FILES = {

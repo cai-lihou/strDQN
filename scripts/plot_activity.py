@@ -2,8 +2,15 @@ import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+import sys
+from pathlib import Path
+
 import pandas as pd
 import seaborn as sns
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 # ================= 配置区域 =================
 DATA_NAME = 'primaryschool'
@@ -18,7 +25,7 @@ def plot_temporal_activity():
     print(f"正在读取数据: {DATA_PATH} ...")
 
     if not os.path.exists(DATA_PATH):
-        print(f"错误: 找不到文件 {DATA_PATH}。请先运行 process.py 生成数据。")
+        print(f"错误: 找不到文件 {DATA_PATH}。请先运行 scripts/preprocess_data.py 生成数据。")
         return
 
     # 1. 加载数据

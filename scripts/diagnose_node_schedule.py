@@ -1,11 +1,17 @@
 import argparse
 import os
+import sys
 from datetime import datetime
+from pathlib import Path
 
 import pandas as pd
 
-from strict_tw_ic import t2EICModel
-from fair_evaluate import (
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from src.diffusion.strict_tw_ic import t2EICModel
+from scripts.fair_evaluate import (
     load_test_edges,
     parse_seed_schedule,
     read_baseline_schedules,
@@ -13,7 +19,7 @@ from fair_evaluate import (
     safe_float,
     safe_int,
 )
-from result_io import default_result_dir, delta_metadata, format_mean_std
+from src.common.result_io import default_result_dir, delta_metadata, format_mean_std
 
 
 def parse_optional_ints(value):

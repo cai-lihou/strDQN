@@ -7,7 +7,7 @@ from dataclasses import dataclass
 
 import pandas as pd
 
-from result_io import default_result_dir, parse_float_list, parse_int_list
+from src.common.result_io import default_result_dir, parse_float_list, parse_int_list
 
 
 def token(value):
@@ -234,7 +234,7 @@ def main():
             for budget in budgets:
                 for duration in durations:
                     main_jobs.append(dqn_job("main", path, budget, duration, seed, [
-                        py, "train_strdqn.py",
+                        py, "scripts/train_strdqn.py",
                         "--dataset", args.dataset,
                         "--gpu", args.gpu,
                         "--seed", str(seed),
@@ -253,7 +253,7 @@ def main():
                 for budget in ablation_budgets:
                     for duration in ablation_durations:
                         ablation_jobs.append(dqn_job(f"ablation/{mode}", path, budget, duration, seed, [
-                            py, "train_ablation.py",
+                            py, "scripts/train_ablation.py",
                             "--dataset", args.dataset,
                             "--gpu", args.gpu,
                             "--ablation", mode,
@@ -291,7 +291,7 @@ def main():
                 path = result_path(args.result_dir, args.dataset, suffix)
                 for duration in sensitivity_durations:
                     sensitivity_jobs.append(dqn_job("sensitivity/P_WAIT", path, args.sensitivity_budget, duration, seed, [
-                        py, "train_strdqn.py",
+                        py, "scripts/train_strdqn.py",
                         "--dataset", args.dataset,
                         "--gpu", args.gpu,
                         "--seed", str(seed),
@@ -308,7 +308,7 @@ def main():
                 path = result_path(args.result_dir, args.dataset, suffix)
                 for duration in sensitivity_durations:
                     sensitivity_jobs.append(dqn_job("sensitivity/lambda", path, args.sensitivity_budget, duration, seed, [
-                        py, "train_strdqn.py",
+                        py, "scripts/train_strdqn.py",
                         "--dataset", args.dataset,
                         "--gpu", args.gpu,
                         "--seed", str(seed),
@@ -324,7 +324,7 @@ def main():
             path = result_path(args.result_dir, args.dataset, suffix)
             for duration in durations:
                 sensitivity_jobs.append(dqn_job("sensitivity/Delta", path, args.sensitivity_budget, duration, seed, [
-                    py, "train_strdqn.py",
+                    py, "scripts/train_strdqn.py",
                     "--dataset", args.dataset,
                     "--gpu", args.gpu,
                     "--seed", str(seed),
@@ -341,7 +341,7 @@ def main():
 
     if "fair_eval" in parts:
         fair_eval_cmd = [
-            py, "fair_evaluate.py",
+            py, "scripts/fair_evaluate.py",
             "--dataset", args.dataset,
             "--suffix", args.suffix,
             "--result-dir", args.result_dir,
@@ -354,12 +354,12 @@ def main():
         run_command(fair_eval_cmd, args.dry_run)
 
     if "aggregate" in parts:
-        run_command([py, "aggregate_results.py", "--dataset", args.dataset, "--suffix", args.suffix,
+        run_command([py, "scripts/aggregate_results.py", "--dataset", args.dataset, "--suffix", args.suffix,
                      "--result-dir", args.result_dir],
                     args.dry_run)
 
     if "plot" in parts:
-        run_command([py, "plot_results.py", "--dataset", args.dataset, "--result-dir", args.result_dir],
+        run_command([py, "scripts/plot_results.py", "--dataset", args.dataset, "--result-dir", args.result_dir],
                     args.dry_run)
 
 

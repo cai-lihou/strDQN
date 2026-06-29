@@ -5,14 +5,20 @@ import time
 import random
 import sys
 import argparse
+from pathlib import Path
 import torch
 import pandas as pd
 import numpy as np
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import f1_score
 from sklearn.metrics import roc_auc_score
-from module import TGAN
-from graph import NeighborFinder
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from src.models.module import TGAN
+from src.models.graph import NeighborFinder
 
 
 

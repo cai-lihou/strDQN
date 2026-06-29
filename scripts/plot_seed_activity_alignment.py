@@ -1,6 +1,8 @@
 import argparse
 import os
 import pickle
+import sys
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -17,7 +19,11 @@ except ModuleNotFoundError as exc:
 else:
     MATPLOTLIB_IMPORT_ERROR = None
 
-from result_io import default_result_dir
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from src.common.result_io import default_result_dir
 
 
 def parse_optional_ints(value):
