@@ -1,5 +1,8 @@
-import pandas as pd
 import math
+import os
+import time
+
+import pandas as pd
 
 
 RUN_ID_COL = "RUN_ID"
@@ -7,8 +10,71 @@ RUN_TIME_COL = "RUN_TIME"
 RUN_ORDER_COL = "__RUN_ORDER__"
 
 
+class FileLock:
+    def __init__(self, path, timeout=3600, poll_interval=0.5, stale_after=86400):
+        self.lock_path = f"{path}.lock"
+        self.timeout = timeout
+        self.poll_interval = poll_interval
+        self.stale_after = stale_after
+        self.fd = None
+
+    def __enter__(self):
+        start = time.time()
+        while True:
+            try:
+                self.fd = os.open(self.lock_path, os.O_CREAT | os.O_EXCL | os.O_RDWR)
+                os.write(self.fd, f"pid={os.getpid()} time={time.time()}\n".encode("utf-8"))
+                return self
+            except FileExistsError:
+                if self._is_stale():
+                    try:
+                        os.remove(self.lock_path)
+                        continue
+                    except OSError:
+                        pass
+                if time.time() - start > self.timeout:
+                    raise TimeoutError(f"Timed out waiting for lock: {self.lock_path}")
+                time.sleep(self.poll_interval)
+
+    def __exit__(self, exc_type, exc, tb):
+        if self.fd is not None:
+            os.close(self.fd)
+            self.fd = None
+        try:
+            os.remove(self.lock_path)
+        except FileNotFoundError:
+            pass
+
+    def _is_stale(self):
+        try:
+            return time.time() - os.path.getmtime(self.lock_path) > self.stale_after
+        except OSError:
+            return False
+
+
 def default_result_dir(dataset):
     return f"./result_new_{dataset}"
+
+
+def safe_filename_token(value):
+    text = str(value or "")
+    return "".join(ch if ch.isalnum() or ch in ("_", "-") else "_" for ch in text)
+
+
+def append_excel_locked(path, new_df):
+    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+    with FileLock(path):
+        if os.path.exists(path):
+            out_df = pd.concat([pd.read_excel(path), new_df], ignore_index=True)
+        else:
+            out_df = new_df
+        out_df.to_excel(path, index=False)
+
+
+def write_excel_locked(path, df):
+    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+    with FileLock(path):
+        df.to_excel(path, index=False)
 
 
 def attach_run_metadata(df, run_id, run_time):

@@ -13,15 +13,23 @@ import pandas as pd
 import argparse
 import sys
 from datetime import datetime
-from result_utils import attach_run_metadata, default_result_dir, delta_metadata, parse_float_list, parse_int_list
+from result_io import (
+    append_excel_locked,
+    attach_run_metadata,
+    default_result_dir,
+    delta_metadata,
+    parse_float_list,
+    parse_int_list,
+    safe_filename_token,
+)
 
 # 引入原TGAN项目依赖
 try:
-    from IC import t2EICModel
+    from strict_tw_ic import t2EICModel
     from module import TGAN
     from graph import NeighborFinder
 except ImportError:
-    print("Warning: Custom modules not found. Code requires IC, module, graph files.")
+    print("Warning: Custom modules not found. Code requires strict_tw_ic, module, graph files.")
 
 # ==============================================================================
 # 1. 全局配置
@@ -1046,7 +1054,10 @@ if __name__ == "__main__":
             current_exp += 1
             print(f"\n[{current_exp}/{total_experiments}] STARTING RUN: Budget={b}, Duration={d}")
 
+            run_suffix = safe_filename_token(args.result_suffix)
             suffix = f"_B{b}_D{d}_S{RANDOM_SEED}"
+            if run_suffix:
+                suffix = f"{suffix}_{run_suffix}"
             DQN_MODEL_SAVE_PATH = f'./saved_models/dqn_final_{DATA_NAME}{suffix}.pth'
             DQN_BEST_MODEL_PATH = f'./saved_models/dqn_best_{DATA_NAME}{suffix}.pth'
 
@@ -1091,11 +1102,7 @@ if __name__ == "__main__":
                     if c not in new_df.columns: new_df[c] = None
                 new_df = new_df[cols]
 
-                if os.path.exists(RESULT_FILE):
-                    pd.concat([pd.read_excel(RESULT_FILE), new_df], ignore_index=True).to_excel(RESULT_FILE,
-                                                                                                index=False)
-                else:
-                    new_df.to_excel(RESULT_FILE, index=False)
+                append_excel_locked(RESULT_FILE, new_df)
 
                 print(f" -> Saved logs for B={b}, D={d}")
 

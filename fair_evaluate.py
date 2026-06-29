@@ -7,8 +7,8 @@ from datetime import datetime
 
 import pandas as pd
 
-from IC import t2EICModel
-from result_utils import default_result_dir, delta_metadata, keep_latest_run
+from strict_tw_ic import t2EICModel
+from result_io import default_result_dir, delta_metadata, keep_latest_run, write_excel_locked
 
 
 ABLATION_FILES = {
@@ -219,6 +219,8 @@ def read_baseline_schedules(path):
             "SeedCount": len(seeds),
             "SourceFile": os.path.basename(path),
             "SourceKind": "baseline_seeds",
+            "STATIC_WEIGHT_MODE": row.get("STATIC_WEIGHT_MODE", "weighted"),
+            "WEIGHT_CAP": row.get("WEIGHT_CAP"),
         })
     return records
 
@@ -303,7 +305,7 @@ def evaluate_records(records, test_edges, rounds, out_path, resume):
             if col not in out_df.columns:
                 out_df[col] = ""
         out_df = out_df.drop_duplicates(subset=KEY_COLS, keep="last")
-    out_df.to_excel(out_path, index=False)
+    write_excel_locked(out_path, out_df)
     print(f"Saved fair evaluation to {out_path} ({len(rows)} new rows)")
 
 
@@ -343,6 +345,7 @@ def collect_records(dataset, suffix, result_dir):
             sensitivity_value=sensitivity_value,
         )
         if sensitivity == "Delta":
+
             for record in sens_records:
                 record["SensitivityValue"] = record["Duration"]
         records.extend(sens_records)
@@ -352,7 +355,7 @@ def collect_records(dataset, suffix, result_dir):
 
 def main():
     parser = argparse.ArgumentParser(description="Fairly re-evaluate saved seed schedules with strict TW-IC")
-    parser.add_argument("--dataset", default="thiers_2012")
+    parser.add_argument("--dataset", default="primaryschool")
     parser.add_argument("--suffix", default="_minimal")
     parser.add_argument("--result-dir", default=None)
     parser.add_argument("--rounds", type=int, default=20)

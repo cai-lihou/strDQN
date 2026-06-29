@@ -4,8 +4,8 @@ from datetime import datetime
 
 import pandas as pd
 
-from IC import t2EICModel
-from fair_eval_results import (
+from strict_tw_ic import t2EICModel
+from fair_evaluate import (
     load_test_edges,
     parse_seed_schedule,
     read_baseline_schedules,
@@ -13,7 +13,7 @@ from fair_eval_results import (
     safe_float,
     safe_int,
 )
-from result_utils import default_result_dir, delta_metadata, format_mean_std
+from result_io import default_result_dir, delta_metadata, format_mean_std
 
 
 def parse_optional_ints(value):

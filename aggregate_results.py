@@ -5,7 +5,7 @@ import os
 import numpy as np
 import pandas as pd
 
-from result_utils import default_result_dir, format_mean_std, keep_latest_run
+from result_io import default_result_dir, format_mean_std, keep_latest_run
 
 try:
     from scipy import stats
@@ -179,7 +179,7 @@ def read_sensitivity_files(dataset, suffix, result_dir):
 
 def main():
     parser = argparse.ArgumentParser(description="Aggregate minimal StrDQN experiment results")
-    parser.add_argument("--dataset", default="thiers_2012")
+    parser.add_argument("--dataset", default="primaryschool")
     parser.add_argument("--suffix", default="_minimal")
     parser.add_argument("--result-dir", default=None)
     args = parser.parse_args()

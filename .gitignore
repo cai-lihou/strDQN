@@ -21,3 +21,11 @@ saved_checkpoints/
 *.xlsx
 *.png
 *.pdf
+
+# Local/private baseline implementations
+run_baselines.py
+finder_pytorch.py
+s2v_im_baseline.py
+dynamic-degree.py
+static-comparision.py
+final_evaluator.py

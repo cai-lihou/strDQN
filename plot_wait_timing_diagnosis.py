@@ -15,7 +15,7 @@ except ModuleNotFoundError as exc:
 else:
     MATPLOTLIB_IMPORT_ERROR = None
 
-from fair_eval_results import (
+from fair_evaluate import (
     load_test_edges,
     parse_seed_schedule,
     read_dqn_schedules,
@@ -23,7 +23,7 @@ from fair_eval_results import (
     safe_float,
     safe_int,
 )
-from result_utils import default_result_dir
+from result_io import default_result_dir
 
 
 ALGORITHMS = {

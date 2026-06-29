@@ -8,19 +8,29 @@ import os
 import pickle
 import sys
 import gc
+import contextlib
+import io
 from collections import deque
 import pandas as pd
 import argparse
 from datetime import datetime
-from result_utils import attach_run_metadata, default_result_dir, delta_metadata, parse_float_list, parse_int_list
+from result_io import (
+    append_excel_locked,
+    attach_run_metadata,
+    default_result_dir,
+    delta_metadata,
+    parse_float_list,
+    parse_int_list,
+    safe_filename_token,
+)
 
 # 引入原TGAN项目依赖
 try:
-    from IC import t2EICModel
+    from strict_tw_ic import t2EICModel
     from module import TGAN
     from graph import NeighborFinder
 except ImportError:
-    print("Warning: Custom modules not found. Code requires IC, module, graph files.")
+    print("Warning: Custom modules not found. Code requires strict_tw_ic, module, graph files.")
 
 # ==============================================================================
 # 1. 全局配置与参数解析
@@ -104,8 +114,20 @@ print(f"Running on device: {device}")
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-from ceshi1 import StrictStreamingGraphEnv as MainStrictStreamingGraphEnv
-from ceshi1 import TGANInferenceWrapper as MainTGANInferenceWrapper
+with contextlib.redirect_stdout(io.StringIO()):
+    import train_strdqn as main_components
+
+MainStrictStreamingGraphEnv = main_components.StrictStreamingGraphEnv
+MainTGANInferenceWrapper = main_components.TGANInferenceWrapper
+
+
+def sync_main_component_globals():
+    main_components.TIME_WINDOW_DURATION = TIME_WINDOW_DURATION
+    main_components.MAX_BUDGET = MAX_BUDGET
+    main_components.SCALE_FACTOR = SCALE_FACTOR
+    main_components.WAIT_COMPENSATION_COEF = WAIT_COMPENSATION_COEF
+    main_components.WAIT_COMPENSATION_CAP = WAIT_COMPENSATION_CAP
+    main_components.ACTIVATION_PROB = ACTIVATION_PROB
 
 
 def seed_everything(seed=42):
@@ -487,6 +509,7 @@ class UnifiedScoringDQN(nn.Module):
 # 5. Training Loop
 # ==============================================================================
 def train_streaming(current_act_duration, train_data, global_min_node_id, ablation_mode='none'):
+    sync_main_component_globals()
     MODEL_INTERNAL_DIM = 128
     AUGMENTED_DIM = MODEL_INTERNAL_DIM + 5
     tgan_wrapper = MainTGANInferenceWrapper(train_data, TGAN_MODEL_PATH, node_dim=MODEL_INTERNAL_DIM,
@@ -633,6 +656,7 @@ def train_streaming(current_act_duration, train_data, global_min_node_id, ablati
 # ==============================================================================
 def test_streaming(model_type, current_act_duration, global_max_wait, test_data, test_budget, global_min_node_id,
                    ablation_mode='none', history_edges=None):
+    sync_main_component_globals()
     MODEL_INTERNAL_DIM = 128
     AUGMENTED_DIM = MODEL_INTERNAL_DIM + 5
     model_path = DQN_BEST_MODEL_PATH if model_type == 'best' and os.path.exists(
@@ -796,7 +820,10 @@ if __name__ == "__main__":
         print(f"\n[{current_exp}/{total_experiments}] STARTING RUN ({ABLATION_MODE}): Budget={b}, Duration={d}")
 
         # 模型路径加上后缀
+        run_suffix = safe_filename_token(args.result_suffix)
         suffix = f"_B{b}_D{d}_S{RANDOM_SEED}{suffix_ablation}"
+        if run_suffix:
+            suffix = f"{suffix}_{run_suffix}"
         DQN_MODEL_SAVE_PATH = f'./saved_models/dqn_final_{DATA_NAME}{suffix}.pth'
         DQN_BEST_MODEL_PATH = f'./saved_models/dqn_best_{DATA_NAME}{suffix}.pth'
 
@@ -840,11 +867,11 @@ if __name__ == "__main__":
 
             if os.path.exists(RESULT_FILE):
                 # 读取旧文件，追加新数据
-                old_df = pd.read_excel(RESULT_FILE)
+                old_df = pd.DataFrame()
                 # 简单去重：如果同参数同模型的记录已存在，可以选择覆盖或追加。这里直接追加。
-                pd.concat([old_df, new_df], ignore_index=True).to_excel(RESULT_FILE, index=False)
+                append_excel_locked(RESULT_FILE, new_df)
             else:
-                new_df.to_excel(RESULT_FILE, index=False)
+                append_excel_locked(RESULT_FILE, new_df)
 
             print(f" -> Saved logs for B={b}, D={d}")
 

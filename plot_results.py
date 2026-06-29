@@ -3,7 +3,7 @@ import os
 
 import pandas as pd
 
-from result_utils import default_result_dir
+from result_io import default_result_dir
 
 try:
     import matplotlib
@@ -163,7 +163,7 @@ def plot_sensitivity(df, dataset, out_dir):
 
 def main():
     parser = argparse.ArgumentParser(description="Plot minimal StrDQN results")
-    parser.add_argument("--dataset", default="thiers_2012")
+    parser.add_argument("--dataset", default="primaryschool")
     parser.add_argument("--result-dir", default=None)
     args = parser.parse_args()
     if not args.result_dir:
